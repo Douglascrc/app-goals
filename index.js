@@ -1,4 +1,5 @@
 const { input, select, checkbox } = require('@inquirer/prompts');
+const { fs } = require('fs').promises;
 
 let goal = {
   value: String,
@@ -13,7 +14,7 @@ const addGoal = async() => {
   const goal = await input({ message: "Digite uma meta: " });
 
   if(goal.length == 0) {
-    console.log('A meta não pode ser vazia');
+    message = 'A meta não pode ser vazia';
     return
   }
   goals.push({ 
@@ -23,8 +24,14 @@ const addGoal = async() => {
   console.log('A meta foi cadastrada com sucesso!');
 }
 
-const listGoals = async() => {
-  const respostas = await checkbox({
+const listGoals = async() => { 
+
+  if(goals.length == 0) {
+    message == 'Não há metas';
+    return
+  }
+
+  const answers = await checkbox({
     message: 'Use as setas para se mover, e o espaço par marcar ou desmarcar e o Enter para finalizar a etapa.',
     choices: [...goals],
     instructions: false
@@ -34,16 +41,20 @@ const listGoals = async() => {
     m.checked = false
   });
 
-  if(respostas.length == 0) {
-    console.log('Não há metas cadastradas');
+  if(answers.length == 0) {
+    message = 'Não há metas selecionadas';
   }
 
-  goals.forEach((respostas) => {
-    const goal = goals.find((m) => {
-      return m.value == respostas;
+  answers.forEach((answer) => {
+    const go = goals.find((m) => {
+      return m.value == answer;
     });
 
+    go.checked = true;
+
   });
+
+  message = 'Meta(s) marcada(s) com sucesso!';
 }
 
 const listOpenGoals = async() => {
@@ -52,7 +63,7 @@ const listOpenGoals = async() => {
   });
 
   if(goalOpen == 0) {
-    console.log('Não há metas pendentes');
+    message = 'Não há metas pendentes';
   }
   
   await select({
@@ -79,10 +90,11 @@ const listGoalsDone = async() => {
 
 const deleteGoals = async() => {
   if(goals.length == 0) {
-    message = "Não existem metas!"
+    message = "Não existem metas à deletar!"
+    return
   }
   const goalsUnchecked = goals.map((m) => {
-    return m.checked == false
+    return { value: m.value, checked: false }
   });
 
   const itemsForDelete = await checkbox({
@@ -103,9 +115,18 @@ const deleteGoals = async() => {
   message = "Meta(s) deleta(s) com sucesso!";
 }
 
+const showMessage = (() => {
+  console.clear();
+  if(message != "") {
+    console.log(message);
+    console.log("")
+  }
+    
+});
+
 const start = async() => {
   while(true) {
-    
+    showMessage();
 
     const option = await select({
       message: "Menu >",
